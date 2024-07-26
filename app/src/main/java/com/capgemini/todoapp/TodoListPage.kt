@@ -40,6 +40,8 @@ fun TodoListPage(viewModel: ToDoViewModel){
     var inputText by remember {
         mutableStateOf("")
     }
+    var isEditing by remember { mutableStateOf(false) }
+    var editingTodoId by remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -57,10 +59,17 @@ fun TodoListPage(viewModel: ToDoViewModel){
                 inputText = it
             })
             Button(onClick = {
-                viewModel.addTodo(inputText)
+                if(editingTodoId !=null){
+                    viewModel.updateTodo(editingTodoId!!,inputText)
+                    editingTodoId=null
+                }
+                else {
+                    viewModel.addTodo(inputText)
+                }
                 inputText = ""
             }) {
-                Text(text = "ADD")
+                Text(text = if (editingTodoId != null) "Update" else "Add")
+
 
             }
         }
@@ -70,7 +79,11 @@ fun TodoListPage(viewModel: ToDoViewModel){
                     itemsIndexed(it){index: Int, item: Todo ->
                         TodoItem(item = item, onDelete = {
                             viewModel.deleteTodo(item.id)
-                        })
+                        }, onUpdate = {
+                            inputText = item.title
+                            editingTodoId = item.id
+                        }
+                            )
                     }
                 }
             )
@@ -85,7 +98,7 @@ fun TodoListPage(viewModel: ToDoViewModel){
 }
 
 @Composable
-fun TodoItem(item:Todo, onDelete : () -> Unit) {
+fun TodoItem(item:Todo, onDelete : () -> Unit, onUpdate : () -> Unit) {
    Row (
        modifier = Modifier
            .fillMaxWidth()
@@ -107,7 +120,13 @@ fun TodoItem(item:Todo, onDelete : () -> Unit) {
                fontSize = 20.sp,
                color= Color.White)
        }
-       
+
+       IconButton(onClick = onUpdate){
+           Icon(painter = painterResource(id = R.drawable.outline_add_circle_24),
+               contentDescription = "edit",
+               tint = Color.White)
+       }
+
        IconButton(onClick = onDelete) {
            Icon(
                painter= painterResource(id = R.drawable.baseline_delete_24),
